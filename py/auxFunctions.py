@@ -28,7 +28,7 @@ def invpname(v, name):
 def invssname(v,name):
 	return v.rsplit('_'+name+'_ss',1)[0]
 
-def gridDB(db0, dbT, name, n = 10, extractSol = None, db_name = 'grids', loop = 'l1', gridtype = 'linear', phi = 1, checkDiff = True, error = 1e-11):
+def gridDB(db0, dbT, name, n = 10, extractSol = None, db_name = 'grids', loop = 'l1', gridtype = 'linear', phi = 1, checkDiff = True, error = 1e-11, sort_index = True):
 	db = GpyDB(ws = db0.ws, alias = db0.get('alias_'), **{'name': db_name})
 	db[loop] = loop+'_'+pd.Index(range(1,n+1),name=loop).astype(str)
 	db.updateDict = {}
@@ -40,7 +40,7 @@ def gridDB(db0, dbT, name, n = 10, extractSol = None, db_name = 'grids', loop = 
 			v0,vT = adj.rc_pd(v0,commonIndex),adj.rc_pd(vT,commonIndex)
 		if not vT.empty:
 			db[ssname(var,name)] = commonIndex
-			db[pname(var,name)] = gpy(adjMultiIndex.addGrid(v0,vT,db.get(loop),pname(var,name), gridtype=gridtype, phi=phi), **{'type':'parameter'})
+			db[pname(var,name)] = gpy(adjMultiIndex.addGrid(v0,vT,db.get(loop),pname(var,name), gridtype=gridtype, phi=phi, sort_index = sort_index), **{'type':'parameter'})
 			db.updateDict[var] = {'c': db[ssname(var,name)], 'par': pname(var,name)}
 	for var in set(db0.getTypes(['scalar_variable','scalar_parameter'])).intersection(set(dbT.getTypes(['scalar_variable','scalar_parameter']))):
 		if (not checkDiff) or (abs(db0.get(var)-dbT.get(var))>error):

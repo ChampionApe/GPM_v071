@@ -78,9 +78,9 @@ $ENDBLOCK
 def simpleDynamic(name, m):
 	return f"""
 $BLOCK B_{name}
-	E_lom_{name}[t,s,n]$(svngs_{m}[s,n] and txE[t])..		vD[t+1,s,n] =E= (vD[t,s,n]*iRate[t]+sp[t,s])/((1+g_LR)*(1+infl_LR));
-	E_euler_{name}[t,s,n]$(output_{m}[s,n] and tx0E[t])..	qD[t,s,n]	=E= qD[t-1,s,n]*(disc[s]*Rrate[t]*pD[t-1,s,n]/pD[t,s,n])**(1/crra[s,n]);
-	E_tvc_{name}[t,s,n]$(svngs_{m}[s,n] and tE[t])..		vD[t,s,n]	=E= (1+h_tvc[s,n])*vD[t-1,s,n];
+	E_lom_{name}[t,s]$(s_{m}[s] and txE[t])..				vAssets[t+1,s,'total']	=E= (vAssets[t,s,'total']*iRate[t]+sp[t,s])/((1+g_LR)*(1+infl_LR));
+	E_euler_{name}[t,s,n]$(output_{m}[s,n] and tx0E[t])..	qD[t,s,n]				=E= qD[t-1,s,n]*(disc[s]*Rrate[t]*pD[t-1,s,n]/pD[t,s,n])**(1/crra[s,n]);
+	E_tvc_{name}[t,s]$(s_{m}[s] and tE[t])..				vAssets[t,s,'total']	=E= (1+h_tvc[s])*vAssets[t-1,s,'total'];
 $ENDBLOCK
 """
 

@@ -4,6 +4,13 @@ from pyDatabases import gpyDB, OrdSet, adjMultiIndexDB
 from pyDatabases.gpyDB_wheels import read, robust
 import RAS
 _stdOffset = {'row0': 1, 'rowE': -1, 'col0': 0, 'colE': -1}
+_stdOrder = OrdSet(['t','s','ss','n','nn','taxTypes','gc'])
+
+def stdSort(symbol, order = None):
+	if isinstance(pyDatabases.getIndex(symbol), pd.MultiIndex):
+		return symbol.reorder_levels([x for x in noneInit(order, _stdOrder+OrdSet(pyDatabases.getDomains(symbol))) if x in pyDatabases.getDomains(symbol)])
+	else:
+		return symbol
 
 def getLoc(x, loc):
 	return x[x==loc].index[0]
@@ -23,7 +30,7 @@ def mergeNone(x,y):
 def standardCleanSettings(db, threshold):
 	""" The standard settings for the RAS adjustments """
 	return {'AI': createDataBlock(db.get('vD'), ('and', [db.get('n_p'),  ('or', [db.get('s_p'), db.get('s_i')])]), threshold),
-			'BJ': createDataBlock(db.get('vD'), ('and', [db.get('n_F'), ('or', [db.get('s_p'), db.get('s_i')])]), threshold, leaveRows = db.get('n_F'))}
+			'BJ': createDataBlock(db.get('vD'), ('and', [db.get('n_F'), ('or', [db.get('s_p'), db.get('s_i')])]), threshold, leaveCols = db.get('n_F'))}
 
 def createDataBlock(v0, conditions, threshold, leaveRows = None, leaveCols = None):
 	d = {'v0': adj.rc_pd(v0, conditions), 'kwargs': {'leaveRows': leaveRows, 'leaveCols': leaveCols}}

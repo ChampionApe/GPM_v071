@@ -21,6 +21,10 @@ class Compile:
 		for g in self.groups.values():
 			g.compile(self.groups)
 
+	def getVariablesFromMetaGroup(self, metaGroup):
+		""" metaGroup = iterator of strings referring to existing group names """
+		return OrdSet.union(*[OrdSet(self.groups[g].conditions) for g in metaGroup])
+
 	def metaGroup(self,db,gs='all'):
 		if isinstance(gs,Group):
 			return gs

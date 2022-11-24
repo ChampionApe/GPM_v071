@@ -9,17 +9,16 @@ class SimpleRamsey(GmsPython):
 			self.readTree(tree)
 			self.adjust(**kwargs)
 
-	def adjust(self, L2C = None, svngs = None, f = None):
+	def adjust(self, L2C = None, f = None):
 		""" add mapping from labor component L to top of consumption nest C. """
 
-		self.ns.update({k: f"{k}_{self.name}" for k in ('labor','L2C','svngs','s','output_n','input_n')})
+		self.ns.update({k: f"{k}_{self.name}" for k in ('labor','L2C','s','output_n','input_n')})
 		self.s.db[self.n('L2C')] = noneInit(L2C, pd.MultiIndex.from_tuples([], names = ['s','n','nn']))
 		self.s.db[self.n('labor')] = L2C.droplevel('nn').unique()
 		self.s.db[self.n('output_n')] = self.get('labor').levels[-1]
 		self.s.db[self.n('input_n')]  = self.get('input').levels[-1]
 		self.s.db[self.n('s')] = self.get('output').levels[0]
-		self.s.db[self.n('svngs')] = noneInit(svngs, pd.MultiIndex.from_tuples([], names = ['s','n']))
-		self.s.db['n'] = self.get('n').union(self.get('output_n')).union(self.get('svngs').levels[-1])
+		self.s.db['n'] = self.get('n').union(self.get('output_n'))
 		self.m[f"{self.name}_labor"] = Submodule(**{'f': noneInit(f, 'IsoFrisch')})
 		self.m[f"{self.name}_dynamic"] = Submodule(**{'f': 'simpleDynamic'})
 		self.m[f"{self.name}_pw"] = Submodule(**{'f': 'priceWedge'})
@@ -55,11 +54,11 @@ class SimpleRamsey(GmsPython):
 				self.n('Rrate'): gpy(pd.Series(self.get('R_LR'), index = self.get('t'), name = self.n('Rrate'))),
 				self.n('iRate'): gpy(pd.Series(self.get('R_LR')*(1+self.get('infl_LR')), index = self.get('t'), name = self.n('iRate'))),
 				self.n('crra'): gpy(pd.Series(2, index = self.get('output'), name = self.n('crra'))),
-				self.n('frisch'): gpy(pd.Series(0.25, index = self.get('labor'), name = self.n('frisch'))),
+				self.n('frisch'): gpy(pd.Series(0, index = self.get('labor'), name = self.n('frisch'))),
 				self.n('Lscale'): gpy(pd.Series(1, index = self.get('labor'), name = self.n('Lscale'))),
 				self.n('disc'): gpy(pd.Series(1/self.get('R_LR'), index = self.get('s'), name = self.n('disc'))),
-				self.n('vD'): gpy(pd.Series(1, index = adjMultiIndexDB.mergeDomains([self.get('t'),self.get('svngs')],self.s.db), name = self.n('vD'))),
-				self.n('h_tvc'): gpy(pd.Series(0, index = self.get('svngs'), name = self.n('h_tvc'))),
+				self.n('vAssets'): gpy(pd.Series(1, index = pd.MultiIndex.from_product([self.get('t'), self.get('s'), pd.Index(['total'], name = 'a')]), name = self.n('vAssets'))),
+				self.n('h_tvc'): gpy(pd.Series(0, index = self.get('s'), name = self.n('h_tvc'))),
 				self.n('tauLump'): gpy(pd.Series(0, index = adjMultiIndexDB.mergeDomains([self.get('txE'),self.get('s')], self.s.db), name = self.n('tauLump'))),
 				self.n('tauS'): gpy(pd.Series(0, index = adjMultiIndexDB.mergeDomains([self.get('txE'), self.get('labor')], self.s.db), name = self.n('tauS'))),
 				self.n('tauD'): gpy(pd.Series(0, index = adjMultiIndexDB.mergeDomains([self.get('txE'), self.get('input')], self.s.db), name = self.n('tauD'))),
@@ -87,11 +86,11 @@ class SimpleRamsey(GmsPython):
 				('eta', self.g('knout')),
 				# ('disc',self.g('s')),
 				('crra', self.g('output')),
-				('h_tvc', self.g('svngs')),
+				('h_tvc', self.g('s')),
 				('mu', ('and', [self.g('map'), ('not', self.g('endo_mu'))])),
 				('Rrate', None), ('iRate', None), ('frisch', self.g('labor')), 
 				('tauD', self.g('input')), ('tauS', self.g('labor')), ('tauLump', ('and', [self.g('s'), self.g('tx0E')])), 
-				('vD', ('and', [self.g('svngs'), self.g('t0')])),
+				('vAssets', ('and', [self.g('s'), self.g('t0')])),
 				('p', ('or', [self.g('output_n'), self.g('input_n')])),
 				]),
 				GmsPy.Group(f"G_{self.name}_endo_always",
@@ -105,7 +104,7 @@ class SimpleRamsey(GmsPython):
 				('sp', self.g('s')),
 				('pS', self.g('labor')),
 				('TotalTax', ('and', [self.g('s'), self.g('tx0E')])),
-				('vD', ('and', [self.g('svngs'), self.g('tx0')]))]
+				('vAssets', ('and', [self.g('s'), self.g('tx0')]))]
 			),
 				GmsPy.Group(f"G_{self.name}_exo_in_calib", 
 			v =[('qD', ('and', [self.g('input'), self.g('t0')])),
@@ -117,7 +116,7 @@ class SimpleRamsey(GmsPython):
 				('Lscale', self.g('labor')),
 				('tauLump', ('and', [self.g('s'), self.g('t0')])),
 				# ('crra', self.g('output'))
-				# ('h_tvc', self.g('svngs'))
+				# ('h_tvc', self.g('s'))
 				('disc', self.g('s'))
 				])
 			]

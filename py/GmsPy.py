@@ -119,12 +119,16 @@ class GmsSettings:
 	def db_ss(self,g,db=None):
 		""" g ∈ {'g_exo','g_endo'} """
 		g = self.metagroup(g,db=db)
-		return {k:v for k,v in {s: self.var_ss(s,g,db=db) for s in g.conditions if s in gpyDB.symbols_db(db)}.items() if v}
+		return {k:v for k,v in {s: self.var_ss(s,g,db=db) for s in g.conditions if s in gpyDB.symbols_db(db)}.items() if v is not None}
+
+	def inferVarExoFromVarEndo(self, var_endo, db = None):
+		db = noneInit(db, self.db)
+		return {k: db[k] if k not in var_endo else gpyDB_wheels.adj.rc_AdjGpy(db[k], ('not',var_endo)) for k in self.Compile.getVariablesFromMetaGroup(self['g_exo']) if k in gpyDB.symbols_db(db)}
 
 	def partition_db(self,db=None):
 		db = self.db if db is None else db
-		d = {'non_var': db.getTypes(('set','subset','mapping','parameter','scalar_parameter')),
-			 'var_endo': self.db_ss('g_endo',db=db), 'var_exo': self.db_ss('g_exo',db=db)}
+		d = {'non_var': db.getTypes(('set','subset','mapping','parameter','scalar_parameter')), 'var_endo': self.db_ss('g_endo',db=db), 'var_exo': self.db_ss('g_exo',db=db)}
+		# d['var_exo'] = self.inferVarExoFromVarEndo(d['var_endo'], db=db)
 		d['residual'] = {k:v for k,v in db.getTypes(('scalar_variable','variable')).items() if k not in (list(d['var_endo'])+list(d['var_exo']))}
 		return d
 
